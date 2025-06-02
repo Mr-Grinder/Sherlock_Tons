@@ -86,16 +86,21 @@ async def process_wallet(message: types.Message, state: FSMContext):
                 })
 
             score, verdict = assess_safety(rows)
+            
+            user = message.from_user
             # Зберігаємо звіт у файл, але не повідомляємо про це користувача
-            result = {
+            result = {                
+                "user_id":              user.id,
+                "username":   user.username or "N/A",
+                "is_bot":     user.is_bot,
                 "address":              addr,
                 "exchange_interaction": has_exchange_interaction(rows, known_exchange_addresses),
                 "tiny_transfers":       sum(1 for tx in rows if tx["value_TON"] < 0.001),
                 "unique_sources":       len({tx["source"]["address"] for tx in rows if tx.get("source") and isinstance(tx["source"], dict)}),
                 "score":                score,
-                "verdict":              verdict
+                "verdict":              verdict              
             }
-            save_wallet_analysis([result], filename=f"wallet_{addr}.xlsx")
+            save_wallet_analysis([result])
 
         # Відправляємо лише вердикт
         await message.answer(verdict)
@@ -123,6 +128,10 @@ async def process_link(message: types.Message, state: FSMContext):
             verdict = "🚨 The URL appears potentially dangerous!"
         elif status == "unknown":
             verdict = "🕵️ URL not recognized. It may be a new or fake domain ⚠️"
+        elif status == "unresolved":
+            verdict = "⁉️ No such domain found, suspected phishing attack!"    
+        elif status == "invalid":
+            verdict = "❌ This doesn't look like a valid link. Please check the format."    
         else:  # "safe"
             verdict = "✅ The URL appears safe."
 

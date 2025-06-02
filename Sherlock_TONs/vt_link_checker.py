@@ -3,6 +3,8 @@ import time
 import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from requests.exceptions import MissingSchema, InvalidURL
+
 
 # Load API key
 load_dotenv()
@@ -13,7 +15,15 @@ HEADERS = {
     "x-apikey": VT_API_KEY
 }
 
+
+
 def check_url_virustotal(url) -> str:
+    if url == "UNRESOLVED_DOMAIN":
+        return "unresolved"
+    elif url == "INVALID_URL":
+         return "invalid"   
+
+    
     parsed = urlparse(url)
     domain = parsed.netloc or parsed.path
 
@@ -29,7 +39,7 @@ def check_url_virustotal(url) -> str:
         )
         scan_response.raise_for_status()
         url_id = scan_response.json()["data"]["id"]
-
+        
         # 2. Wait for scan to complete
         time.sleep(10)
 
@@ -46,19 +56,17 @@ def check_url_virustotal(url) -> str:
 
         print(f"🧾 Malicious: {malicious}, Suspicious: {suspicious}, Harmless: {harmless}")
 
-        if malicious > 0 or suspicious > 0:
+        if malicious > 0 or suspicious > 0 :
             return "dangerous"
-        elif malicious == 0 and suspicious == 0 and harmless == 0:
-            return "unknown"
+        elif  url == "UNRESOLVED_DOMAIN":
+           return "unresolved"   
+        elif url == "INVALID_URL":
+         return "invalid"   
         else:
             return "safe"
-
+        
     except requests.exceptions.ConnectionError as e:
         print(f"❌ Unable to connect to {domain}: {e}")
-        return "unknown"
-
-    except Exception as e:
-        print(f"❌ Error: {e}")
         return "unknown"
 
 def resolve_url(url):
@@ -70,9 +78,13 @@ def resolve_url(url):
         final = response.url
         print(f"🔗 Resolved URL: {final}")
         return final
+    except (MissingSchema, InvalidURL) as e:
+        print(f"❌ Invalid URL format: {e}")
+        return "INVALID_URL"
     except Exception as e:
         print(f"❌ Failed to resolve URL: {e}")
-        return url  # fallback
+        return "UNRESOLVED_DOMAIN"
+
 
 def convert_onion_to_gateway(url):
     """

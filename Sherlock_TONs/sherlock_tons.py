@@ -143,9 +143,3 @@ async def process_link(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("🔄 What next?", reply_markup=keyboard)
 
-async def main():
-    print("🚀 Bot is starting...")
-    await dp.start_polling(bot, allowed_updates=["message"])
-
-if __name__ == "__main__":
-    asyncio.run(main())

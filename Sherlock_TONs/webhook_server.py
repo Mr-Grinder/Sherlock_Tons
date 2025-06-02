@@ -39,5 +39,5 @@ async def telegram_webhook(request: Request):
     update = types.Update.model_validate(body)
 
     # Передаємо Update до диспетчера через feed_update
-    await dp.feed_update(update)
+    await dp.feed_update(update=update, bot=bot)
     return {"status": "ok"}

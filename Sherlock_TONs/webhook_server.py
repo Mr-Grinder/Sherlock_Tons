@@ -17,15 +17,20 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def on_startup():
-    # Встановлюємо вебхук у Telegram
+    # Уточнюємо: видаляємо старий вебхук та скидaємо всі накопичені апдейти
+    await bot.delete_webhook(drop_pending_updates=True)
+    # Далі виставляємо новий вебхук із секретом
     await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET)
-    print(f"✅ Webhook set to: {WEBHOOK_URL}")
+    print(f"✅ Webhook set to: {WEBHOOK_URL}  (old updates dropped)")
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    # Видаляємо вебхук при вимиканні
-    await bot.delete_webhook()
-    print("❌ Webhook deleted")
+    # Перед завершенням роботи сервера видаляємо вебхук (та знищуємо можливі черги):
+    await bot.delete_webhook(drop_pending_updates=True)
+    # Імовірно, після цього слід також закрити асинхронну сесію бота
+    await bot.session.close()
+    print("❌ Webhook deleted and bot session closed")
+
 
 @app.post(WEBHOOK_PATH)
 async def telegram_webhook(request: Request):

@@ -1,9 +1,0 @@
-aiogram==3.20.0.post0
-aiohttp==3.11.18
-async-timeout==5.0.1
-attrs==25.3.0
-python-dotenv==1.1.0
-requests==2.32.3
-pandas==2.2.3
-fastapi
-uvicorn[standard]
